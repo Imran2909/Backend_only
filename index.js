@@ -57,6 +57,10 @@ passport.use(new GitHubStrategy({
     }
 ));
 
+app.get("/",(req,res)=>{
+    res.send("Welcome")
+})
+
 app.get('/auth/github', passport.authenticate('github', { scope: ["profile", "email"] }));
 
 app.get('/auth/github/callback',
