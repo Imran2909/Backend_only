@@ -5,24 +5,22 @@ const { connection } = require("./config/db")
 const { UserModel } = require("./model/user.model")
 const { user_route } = require("./route/user.route")
 const { authenticate } = require("./middleware/auth.middleware.js")
-const cookieParser = require('cookie-parser');
+// const cookieParser = require('cookie-parser');
 const {BlacklistModel} = require("./model/block")
 const { Server } = require("socket.io")
+var cookieParser = require('cookie-parser')
 // const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 const { dex_rout } = require("./route/dexter.routes")
-const client = createClient("redis://default:pAZIQGIYzeoDcfPm3PKrPU0gmPWpMeQo@redis-11856.c301.ap-south-1-1.ec2.cloud.redislabs.com:11856")
-client.on("error", (err) => console.log("Redis Client Error", err));
 const GitHubStrategy = require('passport-github').Strategy;
 const passport = require("passport")
 const session = require('express-session');
 const cors = require("cors")
 const app = express()
+app.use(cookieParser())
 const fs = require("fs")
-app.use(cookieParser());
 const path = require('path');
 const http = require("http")
 app.use(express.json())
-client.connect();
 app.use(cors({
     origin: "*"
 }))
@@ -58,7 +56,18 @@ passport.use(new GitHubStrategy({
 ));
 
 app.get("/",(req,res)=>{
-    res.send("Welcome")
+    res.clearCookie("tokn")
+    const token = jwt.sign({ userId: "user[0]._id" }, "imran", {
+        expiresIn: "10h",
+    });
+    res.cookie("tokn", token).send({ msg: "Login successful", token: token });
+})
+
+app.get("/get",(req,res)=>{
+    var Cookie = req.headers.cookie;
+    // let t=req.cookie("tokn")
+    res.send({"msg":Cookie})
+    // res.send("Welcome")
 })
 
 app.get('/auth/github', passport.authenticate('github', { scope: ["profile", "email"] }));
@@ -67,7 +76,7 @@ app.get('/auth/github/callback',
     passport.authenticate('github', { failureRedirect: '/login' }),
     function (req, res) {
         const token = jwt.sign({ userId: "imran" }, 'imran', { expiresIn: '1h' });
-        client.set("token", token)
+        fs.writeFileSync("token.txt",token)
         console.log(token)
         // Successful authentication, redirect home.
         res.redirect("http://127.0.0.1:5500/Frontend/dexter(single).html");
@@ -75,6 +84,16 @@ app.get('/auth/github/callback',
 
 //---------------------------GITHUB OAUTH COMPLETED----------------------------------//
 
+
+
+//------------------------------USER ROUTE----------------------------------//
+
+app.use("/user", user_route)
+
+
+//--------------------------FROM HERE AUTHENTICATION STARTS-------------------------//
+
+app.use(authenticate)
 
 
 //--------------------------TO GET ALL USERS FROM DATABASE-----------------------------//
@@ -88,15 +107,6 @@ app.get("/allUsers", async (req, res) => {
 })
 
 
-//------------------------------USER ROUTE----------------------------------//
-
-app.use("/user", user_route)
-
-
-//--------------------------FROM HERE AUTHENTICATION STARTS-------------------------//
-
-app.use(authenticate)
-
 
 //------------------------------FOR LOGOUT---------------------------------------//
 app.get("/logout",async (req, res) => {
@@ -108,7 +118,6 @@ app.get("/logout",async (req, res) => {
 
 //------------------------------FOR CREATING ROOM-------------------------------------//
 app.use("/room",dex_rout)
-
 
 //----------------------------WEB SOCKET------------------------------------//
 const httpServer = http.createServer(app)
@@ -186,7 +195,7 @@ wss.on("connection", (socket) => {
 
 //--------------------------------LISTENING AND RUNNING SERVER-----------------------------------//
 
-httpServer.listen(2020 || 3000 , async () => {
+httpServer.listen(2020 , async () => {
     try {
         await connection
         console.log("DB connected");
@@ -196,3 +205,4 @@ httpServer.listen(2020 || 3000 , async () => {
     }
     console.log("Port @ localhost:2020");
 })
+

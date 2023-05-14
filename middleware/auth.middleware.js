@@ -1,16 +1,16 @@
 const express = require("express")
 const jwt = require("jsonwebtoken")
 const { UserModel } = require("../model/user.model")
+var cookieParser = require('cookie-parser')
 const { BlacklistModel } = require("../model/block")
-const { createClient } = require("redis");
-const client = createClient("redis://default:pAZIQGIYzeoDcfPm3PKrPU0gmPWpMeQo@redis-11856.c301.ap-south-1-1.ec2.cloud.redislabs.com:11856")
-client.on("error", (err) => console.log("Redis Client Error", err));
-client.connect();
+const fs = require("fs")
+const app= express()
+app.use(cookieParser())
 
 const authenticate = async (req, res, next) => {
-  console.log("Middleware")
-  const token = await client.get('token')
-  console.log(token)
+  let token = fs.readFileSync('./token.txt',
+    { encoding: 'utf8'});
+ console.log("middleware", token)
   if (token) {
     const blocked = await BlacklistModel.find({ token })
     if (blocked.length > 0) {
@@ -29,7 +29,6 @@ const authenticate = async (req, res, next) => {
         res.send({ "msg": "Please login first" })
       }
     });
-
   }
   else {
     res.send({ "msg": "Please login first" })
