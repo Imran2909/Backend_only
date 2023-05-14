@@ -186,9 +186,9 @@ wss.on("connection", (socket) => {
 
 
 
-//----------------------------------LISTENING AND RUNNING SERVER-----------------------------------//
+//--------------------------------LISTENING AND RUNNING SERVER-----------------------------------//
 
-httpServer.listen(2020, async () => {
+httpServer.listen(2020 || 3000 , async () => {
     try {
         await connection
         console.log("DB connected");
