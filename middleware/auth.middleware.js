@@ -19,11 +19,7 @@ const authenticate = async (req, res, next) => {
 
     jwt.verify(token, "imran", async (err, decoded) => {
       if (decoded) {
-        // req.body.user = decoded.userId
-        // req.user = await UserModel.find({ _id: decoded.userId })
-        console.log("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
         next()
-        console.log("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
       }
       else {
         res.send({ "msg": "Please login first" })
@@ -32,7 +28,6 @@ const authenticate = async (req, res, next) => {
   }
   else {
     res.send({ "msg": "Please login first" })
-    // res.status(400).send({ "msg": "Please login first" })
   }
 
 }
